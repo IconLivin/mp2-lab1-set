@@ -74,9 +74,7 @@ void TBitField::ClrBit(const int n) // очистить бит
 int TBitField::GetBit(const int n) const // получить значение бита
 {	
   if ((pMem[GetMemIndex(n)] & GetMemMask(n)) != 0) 
-	  return 1;
-  else 
-	  return 0;
+	  return pMem[GetMemIndex(n)&GetMemMask(n)];
 }
 
 // битовые операции
@@ -96,10 +94,13 @@ int TBitField::operator==(const TBitField &bf) const // сравнение
 {
 	if(BitLen!=bf.BitLen)
 		return 0;
-	for(int i=0;i<MemLen;i++)
+	for(int i=0;i<MemLen-1;i++)
 		if(pMem[i]!=bf.pMem[i])
 			return 0;
-  return 1;
+	for(int i=(MemLen-1)*32;i<BitLen;i++)
+		if(GetBit(i)!=bf.GetBit(i))
+			return 0;
+	return 1;
 }
 
 int TBitField::operator!=(const TBitField &bf) const // сравнение
@@ -112,22 +113,76 @@ int TBitField::operator!=(const TBitField &bf) const // сравнение
 
 TBitField TBitField::operator|(const TBitField &bf) // операция "или"
 {
+	int len;
+	if(BitLen>bf.BitLen)
+		len=BitLen;
+	else
+		len=bf.BitLen;
+	TBitField tmp(len);
+	for(int i=0;i<MemLen;i++)
+		tmp.pMem[i]=pMem[i];
+	for(int i=0;i<bf.MemLen;i++)
+		tmp.pMem[i]|=bf.pMem[i];
+	return tmp;
 }
 
 TBitField TBitField::operator&(const TBitField &bf) // операция "и"
 {
+	int len;
+	if(BitLen>bf.BitLen)
+		len=BitLen;
+	else
+		len=bf.BitLen;
+	TBitField tmp(len);
+	for(int i=0;i<MemLen;i++)
+		tmp.pMem[i]=pMem[i];
+	for(int i=0;i<bf.MemLen;i++)
+		tmp.pMem[i]&=bf.pMem[i];
+	return tmp;
 }
 
 TBitField TBitField::operator~(void) // отрицание
 {
+	TBitField tmp(BitLen);
+	for(int i=0;i<MemLen;i++)
+		tmp.pMem[i]=pMem[i];
+		for(int i=0;i<BitLen;i++)
+		{
+			if(GetBit(i)==1)
+				tmp.ClrBit(i);
+			else
+				tmp.SetBit(i);
+		}
+		return tmp;
+
 }
 
 // ввод/вывод
 
 istream &operator>>(istream &istr, TBitField &bf) // ввод
 {
+	int tmp;
+	for(int i=0;i<bf.GetLength();i++)
+	{
+		istr>>tmp;
+		if(tmp==1)
+			bf.SetBit(i);
+		else if (tmp==0)
+			bf.ClrBit(i);
+		else
+			break;
+	}
+	return istr;
 }
 
 ostream &operator<<(ostream &ostr, const TBitField &bf) // вывод
 {
+	for(int i=0;i<bf.GetLength();i++)
+	{	
+		if(bf.GetBit(i)==0)
+			ostr<<"0 ";
+		else
+			ostr<<"1 ";
+	}
+	return ostr;
 }
