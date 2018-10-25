@@ -41,15 +41,14 @@ int TBitField::GetMemIndex(const int n) const // индекс Мем для би
 {
 	if(n<0||n>=BitLen)
 		throw -1;
-	return (n/(sizeof(TELEM)*8));
+	return n/(sizeof(TELEM)*8);
 }
 
 TELEM TBitField::GetMemMask(const int n) const // битовая маска для бита n
 {
 	if(n<0||n>=BitLen)
 		throw -1;
-	int sdw=n%32;
-	return(1<<sdw);
+	return 1<<n%(sizeof(TELEM)*8);
 }
 
 // доступ к битам битового поля
@@ -61,32 +60,51 @@ int TBitField::GetLength(void) const // получить длину (к-во б�
 
 void TBitField::SetBit(const int n) // установить бит
 {
-	int Index=GetMemIndex(n);
-	TELEM mask=GetMemMask(n);
-	pMem[Index]=mask;
+	if ((n<0) || (n >= BitLen))
+		throw n;
+
+	int Index = GetMemIndex(n);
+	TELEM Mask = GetMemMask(n);
+	pMem[Index] |= Mask;
 }
 
 void TBitField::ClrBit(const int n) // очистить бит
 {
-	pMem[GetMemIndex(n)]&=~GetMemMask(n);
+	if ((n<0) || (n >= BitLen))
+		throw n;
+
+	int Index = GetMemIndex(n);
+	TELEM Mask = GetMemMask(n);
+	pMem[Index] &= ~Mask;
 }
 
 int TBitField::GetBit(const int n) const // получить значение бита
 {	
-  if ((pMem[GetMemIndex(n)] & GetMemMask(n)) != 0) 
-	  return pMem[GetMemIndex(n)&GetMemMask(n)];
+	if ((n<0) || (n >= BitLen))
+		throw n;
+
+	int Index = GetMemIndex(n);
+	TELEM Mask = GetMemMask(n);
+	Mask &= pMem[Index];
+	if (Mask != 0)
+		return 1;
+	else
+		return 0;
 }
 
 // битовые операции
 
 TBitField& TBitField::operator=(const TBitField &bf) // присваивание
 {
-	BitLen=bf.BitLen;
-	MemLen=bf.MemLen;
-	delete[] pMem;
- 	pMem=new TELEM[MemLen];
-	for(int i=0;i<MemLen;i++)
-		pMem[i]=bf.pMem[i];
+	if (MemLen != bf.MemLen) {
+		delete[] pMem;
+		MemLen = bf.MemLen;
+		pMem = new TELEM[MemLen];
+	}
+	BitLen = bf.BitLen;
+	for (int i = 0; i<MemLen; i++) {
+		pMem[i] = bf.pMem[i];
+	}
 	return *this;
 }
 
@@ -143,18 +161,11 @@ TBitField TBitField::operator&(const TBitField &bf) // операция "и"
 
 TBitField TBitField::operator~(void) // отрицание
 {
-	TBitField tmp(BitLen);
-	for(int i=0;i<MemLen;i++)
-		tmp.pMem[i]=pMem[i];
-		for(int i=0;i<BitLen;i++)
-		{
-			if(GetBit(i)==1)
-				tmp.ClrBit(i);
-			else
+		TBitField tmp(BitLen);
+		for (int i = 0; i<BitLen; i++)
+			if (GetBit(i) == 0)
 				tmp.SetBit(i);
-		}
 		return tmp;
-
 }
 
 // ввод/вывод
