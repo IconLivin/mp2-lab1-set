@@ -51,43 +51,74 @@ void TSet::DelElem(const int Elem) // исключение элемента мн
 
 TSet& TSet::operator=(const TSet &s) // присваивание
 {
+	this->MaxPower = s.MaxPower;
+	this->BitField = s.BitField;
+	return *this;
 }
 
 int TSet::operator==(const TSet &s) const // сравнение
 {
-    return 0;
+	return (BitField == s.BitField);
 }
 
 int TSet::operator!=(const TSet &s) const // сравнение
 {
+	return !(BitField == s.BitField);
 }
 
 TSet TSet::operator+(const TSet &s) // объединение
 {
+	TSet temp(BitField | s.BitField);
+	return temp;
+
 }
 
 TSet TSet::operator+(const int Elem) // объединение с элементом
 {
+	TSet res(*this);
+	res.InsElem(Elem);
+	return res;
 }
 
 TSet TSet::operator-(const int Elem) // разность с элементом
 {
+	TSet res(*this);
+	res.DelElem(Elem);
+	return res;
 }
 
 TSet TSet::operator*(const TSet &s) // пересечение
 {
+	TSet temp(BitField & s.BitField);
+	return temp;
 }
 
 TSet TSet::operator~(void) // дополнение
 {
+	TSet temp(~BitField);
+	return temp;
 }
 
 // перегрузка ввода/вывода
 
 istream &operator>>(istream &istr, TSet &s) // ввод
 {
+	int Elem;
+	istr >> Elem;
+	while (Elem >= 0 && Elem < s.MaxPower)
+	{
+		s.InsElem(Elem);
+		istr >> Elem;
+	}
+	return istr;
 }
 
 ostream& operator<<(ostream &ostr, const TSet &s) // вывод
 {
+	for (int i = 0; i < s.MaxPower; i++)
+	{
+		if (s.IsMember(i))
+			ostr << i << ' ';
+	}
+	return ostr;
 }
